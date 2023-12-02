@@ -1,0 +1,25 @@
+int result = 0
+
+
+lines: /* empty */ {0}
+    line lines {$1 + $2}
+    ;
+
+line: first last {first*10 + last};
+
+
+first: terminal terminal* {$1};
+last: terminal* terminal {$-1};
+
+
+terminal : DIGIT  {$1}
+    | 'one' { 1}
+    | 'two' { 2}
+    | 'three' { 3}
+    | 'four' { 4}
+    | 'five' { 5}
+    | 'six' { 6}
+    | 'seven' { 7}
+    | 'eight' { 8}
+    | 'nine' { 9} 
+    ;

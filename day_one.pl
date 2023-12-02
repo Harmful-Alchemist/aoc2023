@@ -2,6 +2,7 @@ main :-
     open('day1.txtpl',read,Str),
     read_lines(Str,Y),
     process(X,Y),
+    % process_acc(Y,0,X),
     close(Str),
     write(X), nl.
 
@@ -22,8 +23,8 @@ process(Res, [H|T]) :-
     first(First, Y),
     Res is X + (First * 10) + Last.
 
-last(X,[_H|T]) :- last(X,T).
 last(X,[X]).
+last(X,[_H|T]) :- last(X,T).
 
 first(H,[H|_T]).
 
@@ -76,3 +77,50 @@ nums(X,[_H|T]) :-
     nums(X,T).
 
 nums([],[]).
+
+% Too slow? Or infinite maybe? Not for example, also I think incorrect for the example :P process_acc([`one`,`11111eightwo`],0,Y). goes fine
+process_acc([],A,A).
+
+process_acc([H|T],A,Tot) :-
+    line(H,Val),
+    Anew is A+Val,
+    process_acc(T,Anew,Tot).
+
+line(X,Val) :- 
+    first_no(X,F),
+    last_no(X,L),
+    Val is 10 * F + L.
+
+first_no(X,H) :-
+    terminals(X,[H|_T]).
+
+last_no(X,Val) :-
+    terminals(X, Ts),
+    last(Val,Ts).
+
+terminals([InputH|InputT], [Val|List]) :-
+    append(X,_Rest,[InputH|InputT]),
+    terminal(X,Val),
+    terminals(InputT,List).
+
+% Ignore unknown
+terminals([_InputH|InputT], List) :-
+    terminals(InputT,List).
+
+terminals([],[]).
+
+terminal(`1`,1).
+terminal(`one`,1).
+terminal(`2`,2).
+terminal(`two`,2).
+terminal(`3`,3).
+terminal(`three`,3).
+terminal(`4`,4).
+terminal(`four`,4).
+terminal(`5`,5).
+terminal(`five`,5).
+terminal(`6`,6).
+terminal(`six`,6).
+terminal(`7`,7).
+terminal(`seven`,7).
+% terminal(_A,0).
