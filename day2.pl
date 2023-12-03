@@ -1,7 +1,7 @@
 main :- 
     open('day2_ex.txtpl',read,Str),
     read_lines(Str,Y),
-    sum_games(Y,0,X,[]),
+    sum_games(Y,X,[]),
     close(Str),
     write(X), nl.
 
@@ -14,90 +14,60 @@ read_lines(Stream,[X|L]) :-
     read_lines(Stream,L).
 
 
-sum_games(In,Val,Val,[]).
-sum_games([Line|T],ValAcc,Val,Out) :-
+sum_games([],0,[]).
+
+sum_games([Line|T],Val,Out) :-
     possible_game1(Line,GameVal),
-    NewVal is ValAcc + GameVal,
-    sum_games(T,NewVal,Val,Out).
+    sum_games(T,Vp,Out),
+    Val is Vp + GameVal.
 
 possible_game1(In,Val) :-
     append(`Game `,R1,In),
     number(R1,Val,R2),
     append(`: `,R3,R2),
-    hands(R3,[],Hands,[]),
+    hands(R3,Hands,[]),
     max(Hands,R,B,G,[]),
     R < 13,
     B < 15,
     G < 14.
 
-possible_game1(In,0).
+possible_game1(_In,0).
+
+possible_game1(_In,0).
+
+max_of(X,Y,Z) :- X > Y, Z is X.
+max_of(X,Y,Z) :- X =< Y, Z is Y.
 
 max([],0,0,0,[]).
+max([Rin,Bin,Gin | T],R,B,G,Out) :-
+    max(T,Rp, Bp, Gp, Out),
+    max_of(Rin,Rp,R),
+    max_of(Bin,Bp,B),
+    max_of(Gin,Gp,G).
 
-max([R,B,G|T],R,B,G,Out) :-
-    R > Rmax,
-    B > Bmax,
-    G > Gmax,
-    max(T,Rmax,Bmax,Gmax,Out).
+hands([],[],[]).
 
-max([R,B,G|T],Rmax,B,G,Out) :-
-    B > Bmax,
-    G > Gmax,
-    max(T,Rmax,Bmax,Gmax,Out).
-
-max([R,B,G|T],R,Bmax,G,Out) :-
-    R > Rmax,
-    G > Gmax,
-    max(T,Rmax,Bmax,Gmax,Out).
-
-max([R,B,G|T],R,B,Gmax,Out) :-
-    R > Rmax,
-    B > Bmax,
-    max(T,Rmax,Bmax,Gmax,Out).
-
-max([R,B,G|T],Rmax,B,Gmax,Out) :-
-    B > Bmax,
-    max(T,Rmax,Bmax,Gmax,Out).
-
-max([R,B,G|T],Rmax,Bmax,G,Out) :-
-    G > Gmax,
-    max(T,Rmax,Bmax,Gmax,Out).
-
-max([R,B,G|T],R,Bmax,Gmax,Out) :-
-    R > Rmax,
-    max(T,Rmax,Bmax,Gmax,Out).
-
-max([R,B,G|T],Rmax,Bmax,Gmax,Out) :-
-    max(T,Rmax,Bmax,Gmax,Out).
-
-
-hands([],Hands,Hands,[]).
-
-hands(In, HandsAcc,Hands,Out) :-
-    hand(In,R,G,B,Rem),
-    NewHands is [R,G,B|HandsAcc],
-    hands(Rem,NewHands,Hands,Out).
-
+%  infinite loop wtf, if on top, this is the problem!
+hands(In, [R,G,B|Hands],Out) :-
+    hand(In,R,G,B,Rem), 
+    hands(Rem,Hands,Out).
 
 hand(In,R,G,B,Out) :-
-    % \+ G is B,
     append(N, R1,In),
-    number(N,R,T),
-    append(` red`,R2,T),
+    number(N,R,[]),
+    append(` red`,R2,R1),
     hand(R2,0,G,B,Out).
 
 hand(In,R,G,B,Out) :-
-    % \+ R is B,
     append(N, R1,In),
-    number(N,G,T),
-    append(` green`,R2,T),
+    number(N,G,[]),
+    append(` green`,R2,R1),
     hand(R2,R,0,B,Out).
 
 hand(In,R,G,B,Out) :-
-    % \+ R is G,
     append(N, R1,In),
-    number(N,B,T),
-    append(` blue`,R2,T),
+    number(N,B,[]),
+    append(` blue`,R2,R1),
     hand(R2,R,G,0,Out).
 
 % ascii ; is 59
