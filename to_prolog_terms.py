@@ -6,7 +6,8 @@ def changed(file):
         with open(file+"pl", "w") as newf:
             for line in f:
                 # print(f"`{line.strip()}`.\n")
-                newf.write(f"`{line.strip()}`.\n")
+                if line.strip() != '':
+                    newf.write(f"`{line.strip()}`.\n")
                 # TODO delete last white line join with \n why not in lines
 
 if __name__ == '__main__':

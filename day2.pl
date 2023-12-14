@@ -2,10 +2,10 @@ main :-
     open('day2.txtpl',read,Str),
     read_lines(Str,Y),
     sum_games(Y,X,[]),
-    % sum_games2(Y,Z,[]),
+    sum_games2(Y,Z,[]),
     close(Str),
-    write(X), nl.
-    % write(Z), nl.
+    write(X), nl,
+    write(Z), nl.
 
 read_lines(Stream,[]) :-
     at_end_of_stream(Stream).
@@ -23,27 +23,27 @@ sum_games([Line|T],Val,Out) :-
     sum_games(T,Vp,Out),
     Val is Vp + GameVal.
 
-% sum_games2([],0,[]).
+sum_games2([],0,[]).
 
-% sum_games2([Line|T],Val,Out) :-
-%     game2(Line,GameVal),
-%     sum_games2(T,Vp,Out),
-%     Val is Vp + GameVal.
+sum_games2([Line|T],Val,Out) :-
+    game2(Line,GameVal),
+    sum_games2(T,Vp,Out),
+    Val is Vp + GameVal.
 
-% game2(In,Product) :-
-%     append(`Game `,R1,In),
-%     number(R1,_Val,R2),
-%     append(`: `,R3,R2),
-%     hands(R3,Hands,[]),
-%     max(Hands,R,B,G,[]),
-%     Product is R * G * B.
+game2(In,Product) :-
+    append(`Game `,R1,In),
+    number(R1,_Val,R2),
+    append(`: `,R3,R2),
+    hands(R3,Hands,[]),
+    max(Hands,R,G,B,[]),
+    Product is R * G * B.
 
 possible_game1(In,Val) :-
     append(`Game `,R1,In),
     number(R1,Val,R2),
     append(`: `,R3,R2),
     hands(R3,Hands,[]),
-    max(Hands,R,B,G,[]),
+    max(Hands,R,G,B,[]),
     R < 13,
     B < 15,
     G < 14.
@@ -56,8 +56,8 @@ max_of(X,Y,Z) :- X > Y, Z is X.
 max_of(X,Y,Z) :- X =< Y, Z is Y.
 
 max([],0,0,0,[]).
-max([Rin,Bin,Gin | T],R,B,G,Out) :-
-    max(T,Rp, Bp, Gp, Out),
+max([Rin,Gin,Bin | T],R,G,B,Out) :-
+    max(T,Rp, Gp, Bp, Out),
     max_of(Rin,Rp,R),
     max_of(Bin,Bp,B),
     max_of(Gin,Gp,G).
@@ -94,8 +94,8 @@ hand(In,R,G,B,Out) :-
 hand([59|Out],0,0,0,Out).
 hand([],0,0,0,[]).
 % ignore space 32 and comma 44
-hand([32|Out],R,B,G,Out2) :- hand(Out,R,G,B,Out2).
-hand([44|Out],R,B,G,Out2) :- hand(Out,R,G,B,Out2).
+hand([32|Out],R,G,B,Out2) :- hand(Out,R,G,B,Out2).
+hand([44|Out],R,G,B,Out2) :- hand(Out,R,G,B,Out2).
 
 number([H1,H2,H3|Out],Val,Out) :-
     digit(H1,V1),
