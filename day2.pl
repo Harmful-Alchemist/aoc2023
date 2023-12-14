@@ -1,9 +1,11 @@
 main :- 
-    open('day2_ex.txtpl',read,Str),
+    open('day2.txtpl',read,Str),
     read_lines(Str,Y),
     sum_games(Y,X,[]),
+    % sum_games2(Y,Z,[]),
     close(Str),
     write(X), nl.
+    % write(Z), nl.
 
 read_lines(Stream,[]) :-
     at_end_of_stream(Stream).
@@ -20,6 +22,21 @@ sum_games([Line|T],Val,Out) :-
     possible_game1(Line,GameVal),
     sum_games(T,Vp,Out),
     Val is Vp + GameVal.
+
+% sum_games2([],0,[]).
+
+% sum_games2([Line|T],Val,Out) :-
+%     game2(Line,GameVal),
+%     sum_games2(T,Vp,Out),
+%     Val is Vp + GameVal.
+
+% game2(In,Product) :-
+%     append(`Game `,R1,In),
+%     number(R1,_Val,R2),
+%     append(`: `,R3,R2),
+%     hands(R3,Hands,[]),
+%     max(Hands,R,B,G,[]),
+%     Product is R * G * B.
 
 possible_game1(In,Val) :-
     append(`Game `,R1,In),
@@ -48,9 +65,12 @@ max([Rin,Bin,Gin | T],R,B,G,Out) :-
 hands([],[],[]).
 
 %  infinite loop wtf, if on top, this is the problem!
-hands(In, [R,G,B|Hands],Out) :-
+hands(In, [R,G,B|Hands],[]) :-
+    \+ is_empty(In),
     hand(In,R,G,B,Rem), 
-    hands(Rem,Hands,Out).
+    hands(Rem,Hands,[]).
+
+is_empty([]).
 
 hand(In,R,G,B,Out) :-
     append(N, R1,In),
