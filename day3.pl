@@ -34,23 +34,20 @@ main :-
 % gears_no([`467..114..`,`...*......`,`..35..633.`],X).
 % Oh bah exactly two adjcent....
 gear(AsteriskI,[S1,E1,N1],[S2,E2,N2],Val) :- 
-    \+ same_number([S1,E1,N1],[S2,E2,N2]),
+    % \+ same_number([S1,E1,N1],[S2,E2,N2]),
     AsteriskI >= S1 - 1,
     AsteriskI =< E1 + 1,
     AsteriskI >= S2 - 1,
     AsteriskI =< E2 + 1,
     Val is N1 * N2.
 
-same_number([S,E,N],[S,E,N]).
+% same_number([S,E,N],[S,E,N]).
 
 gears(_,[_,_,_],[],0).
 
-gears(I,N1,[S2,E2,N2|_More],Val) :-
-    % write(N1),nl,
-    gear(I,N1,[S2,E2,N2],Val).
-    % write(N),nl,
-    % gears(I,N1,More,Valp), %only if no other 2 number make a gear with an asterisk
-    % Val is Valp + N.
+gears(I,N1,[S2,E2,N2|More],Val) :-
+    gear(I,N1,[S2,E2,N2],Val),
+    gears(I,N1,More,0).
 
 gears(I,N1,[S2,E2,N2|More],Val) :-
     \+ gear(I,N1,[S2,E2,N2],_),
@@ -58,23 +55,44 @@ gears(I,N1,[S2,E2,N2|More],Val) :-
 
 gears_more(_,[],_,0).
 
-gears_more(I,[S1,E1,N1|More],N2,Val) :-
-    gears(I,[S1,E1,N1],N2,Valn),
-    gears_more(I,More,N2,Valp),
-    % Valp is Valn,
-    write(Valn),nl,write(Valp),nl,
-    Val is Valp + Valn.
-
 % gears_more(I,[S1,E1,N1|More],N2,Val) :-
-%     \+ gears(I,[S1,E1,N1],N2,_),
-%     gears_more(I,More,N2,Val).
+%     gears(I,[S1,E1,N1],N2,Valn),
+%     gears_more(I,More,N2,Valp),
+%     % Valp is Valn,
+%     write(Valn),nl,write(Valp),nl,
+%     Val is Valp + Valn.
 
+gears_more(I,[S1,E1,N1|More],N2,Val) :-
+    no_n([S1,E1,N1],N2,N3),
+    \+ Val is 0,
+    gears(I,[S1,E1,N1],N3,0),
+    gears_more(I,More,N2,Val).
+
+gears_more(I,[S1,E1,N1|More],N2,Val) :-
+    no_n([S1,E1,N1],N2,N3),
+    \+ Val is 0,
+    gears(I,[S1,E1,N1],N3,Val),
+    gears_more(I,More,N2,0).
+
+gears_more(I,[S1,E1,N1|More],N2,Val) :-
+    no_n([S1,E1,N1],N2,N3),
+    % \+ Val is 0,
+    gears(I,[S1,E1,N1],N3,Val), 
+    gears_more(I,More,N2,Val).
+
+no_n(_,[],[]).
+no_n([S1,E1,N1],[S1,E1,N1|L2],L2).
+no_n([S1,E1,N1],[S2,E2,N2|L2],[S2,E2,N2|L3]) :-
+    \+ S1 is S2,
+    no_n([S1,E1,N1],L2,L3).
+
+% TODO other option is to delete number from N2 to prevent dupls and then only take 1 zero somewhere don't need the Val Val Val variant...
 
 gears_all([],_,0).
 gears_all([I|Is],Ns,Val) :-
     gears_more(I,Ns,Ns,Valn),
     gears_all(Is,Ns,Valp),
-    Val is Valn/2 + Valp. % We get them from both numbers...
+    Val is Valn + Valp.
 
 gears_no([],0).
 
