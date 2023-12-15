@@ -1,11 +1,10 @@
 main :- 
     open('day3_ex.txtpl',read,Str),
-    read_lines(Str,Y).
-    % sum_games(Y,X,[]),
-    % sum_games2(Y,Z,[]),
+    read_lines(Str,Y),
+    % X is 4361, % Ok sure it finds the correct answer but also more.....
+    partno(Y,X),
     % close(Str),
-    % write(X), nl,
-    % write(Z), nl.
+    write(X), nl.
 
 % Write a quick grammar?
 % Sum : Partnumber Partnumber Sum { $1 + $2 + Sum }
@@ -21,13 +20,91 @@ main :-
 % Meh don't like it, are the lines constant length? Yes, but whatever
 % How about a line has a relation to symbol indices and number indices(as a list)
 
-% info(Line,CurrentIndex,Symbols,Numbers,Remaining).
+% partNo([Line], [Val])
+partno([],0).
 
-% Is ambiguous of course, hmm......
+partno([Linep, Line|Lines],Val) :-
+    info(Linep,_,Symbols,_,[]),
+    info(Line,_,Symbolsl,Numbers,[]),
+    parts_adjacent(Symbolsl,Numbers,Vala), %TODO more like filter adjecent numbers from it to not count double
+    parts_diag(Symbols,Numbers,Valc),
+    partno(Lines,Valp), % processed linep?
+    Val is Valc + Valp + Vala.
+
+partno([Line, Linep|Lines],Val) :-
+    info(Linep,_,Symbols,_,[]),
+    info(Line,_,Symbolsl,Numbers,[]),
+    parts_adjacent(Symbolsl,Numbers,Vala), %TODO more like filter adjecent numbers from it to not count double
+    parts_diag(Symbols,Numbers,Valc),
+    partno([Linep | Lines],Valp),
+    Val is Valc + Valp + Vala.
+
+partno([Line],Val) :-
+    info(Line,_,Symbols,Numbers,[]),
+    parts_adjacent(Symbols,Numbers,Val).
+    % partno(Lines,Valp),
+    % Val is Valc + Valp.
+
+% partno([Line|Lines],Val) :- 
+%     info(Line,_,Symbols,Numbers,[]),
+%     \+ parts_adjacent(Symbols,Numbers,_),
+%     partno(Lines,Val).
+
+% partno([Line1,Line2|Lines],Val) :- 
+%     info(Line1,_,Symbols1,Numbers1,[]),
+%     info(Line2,_,Symbols2,Numbers2,[]),
+%     \+ parts_diag(Symbols1,Numbers2,_),
+%     \+ parts_diag(Symbols2,Numbers1,_),
+%     partno([Line2|Lines],Val).
+
+% Double count with diag?
+parts_adjacent(_,[],0).
+
+parts_adjacent(Symbols,[StartN,_,N|More],Val) :-
+    Before is StartN -1,
+    member(Before,Symbols),
+    parts_adjacent(Symbols,More,Vp),
+    Val is Vp + N.
+
+parts_adjacent(Symbols,[_,EndN,N|More],Val) :-
+    After is EndN + 1,
+    member(After,Symbols),
+    parts_adjacent(Symbols,More,Vp),
+    Val is Vp + N.
+
+parts_adjacent(Symbols,[StartN,EndN,_|More],Val) :-
+    Before is StartN -1,
+    \+ member(Before,Symbols),
+    After is EndN + 1,
+    \+ member(After,Symbols),
+    parts_adjacent(Symbols,More,Val).
+
+parts_diag(_,[],0).
+
+parts_diag(Symbols,[StartN,EndN,N|More],Val) :-
+    Start is StartN - 1,
+    End is EndN + 1,
+    parts_diag(Symbols,More,Valp),
+    contains_bound(Start, End,Symbols),
+    Val is Valp + N.
+
+parts_diag(Symbols,[StartN,EndN,_|More],Val) :-
+    Start is StartN - 1,
+    End is EndN + 1,
+    \+ contains_bound(Start, End,Symbols),
+    parts_diag(Symbols,More,Val).
+
+contains_bound(Min,Max,[S|_]) :-
+    S =< Max,
+    S >= Min.
+
+contains_bound(Min,Max,[_|Symbols]) :-
+    contains_bound(Min,Max,Symbols).
+
+% info(Line,CurrentIndex,Symbols,Numbers,Remaining).
 info([],0,[],[],[]).
 
 info([S|Out],I,[I|A],B,[]) :-
-    % \+ number(S,_,[]),
     symbol(S),
     info(Out,Ii,A,B,[]),
     I is Ii + 1.
@@ -52,7 +129,6 @@ info([N1,N2,N3|Out],Iend,[Istart,Iend|A],[Istart,Iend,Val|B],[]) :-
     Istart is Ii + 1,
     Iend is Ii + 2.
 
-% TODO prolly ambig vs [N1,N2]
 info([N],I,[I|A],[I,I,Val|B],[]) :-
     number([N],Val,[]),
     info([],Ii,A,B,[]),
@@ -65,8 +141,6 @@ info([N, N2|Out],I,[I|A],[I,I,Val|B],[]) :-
     I is Ii + 1.
 
 info([S|Out],I,A,B,[]) :-
-    % \+ symbol(S),
-    % \+ number(S,_,[]),
     dot(S),
     info(Out,Ii,A,B,[]),
     I is Ii + 1.
