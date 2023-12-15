@@ -55,12 +55,11 @@ gears(I,N1,[S2,E2,N2|More],Val) :-
 
 gears_more(_,[],_,0).
 
-% gears_more(I,[S1,E1,N1|More],N2,Val) :-
-%     gears(I,[S1,E1,N1],N2,Valn),
+% gears_more(I,[S1,E1,N1|More],N2,0) :-
+%     no_n([S1,E1,N1],N2,N3),
+%     gears(I,[S1,E1,N1],N3,Valn),
 %     gears_more(I,More,N2,Valp),
-%     % Valp is Valn,
-%     write(Valn),nl,write(Valp),nl,
-%     Val is Valp + Valn.
+%     \+ Valp is Valn.
 
 gears_more(I,[S1,E1,N1|More],N2,Val) :-
     no_n([S1,E1,N1],N2,N3),
@@ -76,7 +75,6 @@ gears_more(I,[S1,E1,N1|More],N2,Val) :-
 
 gears_more(I,[S1,E1,N1|More],N2,Val) :-
     no_n([S1,E1,N1],N2,N3),
-    % \+ Val is 0,
     gears(I,[S1,E1,N1],N3,Val), 
     gears_more(I,More,N2,Val).
 
@@ -94,10 +92,24 @@ gears_all([I|Is],Ns,Val) :-
     gears_all(Is,Ns,Valp),
     Val is Valn + Valp.
 
+gears_all([I|Is],Ns,Val) :-
+    \+ gears_more(I,Ns,Ns,_),
+    gears_all(Is,Ns,Val).
+
 gears_no([],0).
 
+gears_no([L1,L2,L3],Val) :-
+    info(L1,_,_,N1,_,[]),
+    info(L2,_,_,N2,G2,[]),
+    info(L3,_,_,N3,G3,[]),
+    combi(N1,N2,N3,Ns),
+    gears_all(G2,Ns,A),
+    append(N2,N3,Ns2),
+    gears_all(G3,Ns2,B),
+    Val is A + B.
+
 gears_no([L1,L2,L3|More],Val) :-
-    % \+ empty(More), % TODO when empty! Altho...
+    \+ empty(More),
     info(L1,_,_,N1,_,[]),
     info(L2,_,_,N2,G2,[]),
     info(L3,_,_,N3,_,[]),
