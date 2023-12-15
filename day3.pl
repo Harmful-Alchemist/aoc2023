@@ -1,8 +1,8 @@
 main :- 
-    open('day3_ex.txtpl',read,Str),
+    open('day3.txtpl',read,Str),
     read_lines(Str,Y),
     % X is 4361, % Ok sure it finds the correct answer but also more.....
-    partno(Y,X),
+    partno([``|Y],X), % add the empty line to have comparison for 1st line
     % close(Str),
     write(X), nl.
 
@@ -20,79 +20,82 @@ main :-
 % Meh don't like it, are the lines constant length? Yes, but whatever
 % How about a line has a relation to symbol indices and number indices(as a list)
 
-% partNo([Line], [Val])
-partno([],0).
+% partno([Line], [Val])
+% partno([],0).
 
-partno([Linep, Line|Lines],Val) :-
-    info(Linep,_,Symbols,_,[]),
-    info(Line,_,Symbolsl,Numbers,[]),
-    parts_adjacent(Symbolsl,Numbers,Vala), %TODO more like filter adjecent numbers from it to not count double
-    parts_diag(Symbols,Numbers,Valc),
-    partno(Lines,Valp), % processed linep?
-    Val is Valc + Valp + Vala.
+partno([L],Val) :-
+    info(L,_,S,N,[]),
+    parts_adjacent(S,N,Val,_).
 
-partno([Line, Linep|Lines],Val) :-
-    info(Linep,_,Symbols,_,[]),
-    info(Line,_,Symbolsl,Numbers,[]),
-    parts_adjacent(Symbolsl,Numbers,Vala), %TODO more like filter adjecent numbers from it to not count double
-    parts_diag(Symbols,Numbers,Valc),
-    partno([Linep | Lines],Valp),
-    Val is Valc + Valp + Vala.
+partno([L1,L2],Val) :-
+    info(L1,_,S1,N1,[]),
+    info(L2,_,S2,N2,[]),
+    parts_adjacent(S1,N1,Val1a,N1_1),
+    parts_diag(S2,N1_1,Val1d,_),
+    parts_adjacent(S2,N2,Val2,_),
+    Val is Val2 + Val1a + Val1d.
 
-partno([Line],Val) :-
-    info(Line,_,Symbols,Numbers,[]),
-    parts_adjacent(Symbols,Numbers,Val).
-    % partno(Lines,Valp),
-    % Val is Valc + Valp.
+partno([L1,L2,L3|More],Val) :-
+    info(L1,_,S1,_,[]),
+    info(L2,_,S2,N2,[]),
+    info(L3,_,S3,_,[]),
+    parts_adjacent(S2,N2,A,Nn),
+    parts_diag(S1,Nn,B,Nnn),
+    parts_diag(S3,Nnn,C,_),
+    partno([L2,L3|More],Valp),
+    \+ empty(More),
+    Val is Valp + A + B + C.
 
-% partno([Line|Lines],Val) :- 
-%     info(Line,_,Symbols,Numbers,[]),
-%     \+ parts_adjacent(Symbols,Numbers,_),
-%     partno(Lines,Val).
+partno([L1,L2,L3|More],Val) :-
+    info(L1,_,S1,_,[]),
+    info(L2,_,S2,N2,[]),
+    info(L3,_,S3,N3,[]),
+    parts_adjacent(S2,N2,A,Nn),
+    parts_diag(S1,Nn,B,Nnn),
+    parts_diag(S3,Nnn,C,_),
+    empty(More),
+    parts_adjacent(S3,N3,D,N3_1),
+    parts_diag(S2,N3_1,E,_),
+    Val is A + B + C + D + E.
 
-% partno([Line1,Line2|Lines],Val) :- 
-%     info(Line1,_,Symbols1,Numbers1,[]),
-%     info(Line2,_,Symbols2,Numbers2,[]),
-%     \+ parts_diag(Symbols1,Numbers2,_),
-%     \+ parts_diag(Symbols2,Numbers1,_),
-%     partno([Line2|Lines],Val).
+empty([]).
 
-% Double count with diag?
-parts_adjacent(_,[],0).
+parts_adjacent(_,[],0,[]).
 
-parts_adjacent(Symbols,[StartN,_,N|More],Val) :-
+parts_adjacent(Symbols,[StartN,_,N|More],Val,RemN) :-
     Before is StartN -1,
     member(Before,Symbols),
-    parts_adjacent(Symbols,More,Vp),
+    parts_adjacent(Symbols,More,Vp,RemN),
     Val is Vp + N.
 
-parts_adjacent(Symbols,[_,EndN,N|More],Val) :-
+parts_adjacent(Symbols,[_,EndN,N|More],Val,RemN) :-
     After is EndN + 1,
     member(After,Symbols),
-    parts_adjacent(Symbols,More,Vp),
+    parts_adjacent(Symbols,More,Vp,RemN),
     Val is Vp + N.
 
-parts_adjacent(Symbols,[StartN,EndN,_|More],Val) :-
+parts_adjacent(Symbols,[StartN,EndN,N|More],Val,[StartN,EndN,N|RemP]) :-
     Before is StartN -1,
     \+ member(Before,Symbols),
     After is EndN + 1,
     \+ member(After,Symbols),
-    parts_adjacent(Symbols,More,Val).
+    parts_adjacent(Symbols,More,Val,RemP).
 
-parts_diag(_,[],0).
+parts_diag(_,[],0,[]).
 
-parts_diag(Symbols,[StartN,EndN,N|More],Val) :-
+parts_diag(Symbols,[StartN,EndN,N|More],Val,RemN) :-
     Start is StartN - 1,
     End is EndN + 1,
-    parts_diag(Symbols,More,Valp),
+    parts_diag(Symbols,More,Valp,RemN),
     contains_bound(Start, End,Symbols),
     Val is Valp + N.
 
-parts_diag(Symbols,[StartN,EndN,_|More],Val) :-
+parts_diag(Symbols,[StartN,EndN,N|More],Val,[StartN,EndN,N|RemP]) :-
     Start is StartN - 1,
     End is EndN + 1,
     \+ contains_bound(Start, End,Symbols),
-    parts_diag(Symbols,More,Val).
+    parts_diag(Symbols,More,Val,RemP).
+    % RemN is [StartN,EndN,N|RemP].
 
 contains_bound(Min,Max,[S|_]) :-
     S =< Max,
