@@ -27,7 +27,7 @@ main :-
 info([],0,[],[],[]).
 
 info([S|Out],I,[I|A],B,[]) :-
-    \+ number(S,_,[]),
+    % \+ number(S,_,[]),
     symbol(S),
     info(Out,Ii,A,B,[]),
     I is Ii + 1.
@@ -39,29 +39,53 @@ info([N1,N2,N3|Out],Iend,[Istart,Imiddle,Iend|A],[Istart,Iend,Val|B],[]) :-
     Imiddle is Ii +2,
     Iend is Ii + 3.
 
-info([N1,N2|Out],Iend,[Istart,Iend|A],[Istart,Iend,Val|B],[]) :-
+info([N1,N2],Iend,[Istart,Iend|A],[Istart,Iend,Val|B],[]) :-
     number([N1,N2],Val,[]),
-    info(Out,Ii,A,B,[]),
+    info([],Ii,A,B,[]),
     Istart is Ii + 1,
     Iend is Ii + 2.
 
-info([N|Out],I,[I|A],[I,I,Val|B],[]) :-
+info([N1,N2,N3|Out],Iend,[Istart,Iend|A],[Istart,Iend,Val|B],[]) :-
+    \+ number([N1,N2,N3],Val,[]),
+    number([N1,N2],Val,[]),
+    info([N3|Out],Ii,A,B,[]),
+    Istart is Ii + 1,
+    Iend is Ii + 2.
+
+% TODO prolly ambig vs [N1,N2]
+info([N],I,[I|A],[I,I,Val|B],[]) :-
     number([N],Val,[]),
-    info(Out,Ii,A,B,[]),
+    info([],Ii,A,B,[]),
+    I is Ii + 1.
+
+info([N, N2|Out],I,[I|A],[I,I,Val|B],[]) :-
+    \+ number([N,N2],Val,[]),
+    number([N],Val,[]),
+    info([N2|Out],Ii,A,B,[]),
     I is Ii + 1.
 
 info([S|Out],I,A,B,[]) :-
-    \+ symbol(S),
-    \+ number(S,_,[]),
+    % \+ symbol(S),
+    % \+ number(S,_,[]),
+    dot(S),
     info(Out,Ii,A,B,[]),
     I is Ii + 1.
 
+
+
 % 46 is ascii dot
+dot(S) :-
+    S is 46.
+
 symbol(S) :- 
     S < 46.
 
+symbol(S) :-
+    S is 47. % /
+
+% Skip numbers
 symbol(S) :- 
-    S > 46.
+    S > 57.
 
 read_lines(Stream,[]) :-
     at_end_of_stream(Stream).
