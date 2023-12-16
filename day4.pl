@@ -17,7 +17,6 @@ updated(I,Wins,Prev,Updated,TicketI) :-
     Wins > 0,
     Ii is I + 1,
     Winsw is Wins - 1,
-    % write(Prev),
     update(I,Prev,Updatedp,TicketI),
     updated(Ii,Winsw,Updatedp,Updated,TicketI).
 
@@ -49,11 +48,6 @@ wins(Ns,Ws,X) :-
     filled(Is),
     length(Is,X).
 
-% copies_original(X,Scores) :-
-%     length(Scores,X),
-%     max_member(1,Scores),
-%     min_member(1,Scores).
-
 copies_original(X,[1|Scores]) :-
     X > 0,
     Xx is X - 1,
@@ -63,7 +57,6 @@ copies_original(0,[]).
 
 score1([],0).
 score1([Line|Lines],Val) :-
-    % write(Line),nl,
     ticket(Line,_,Ns,Ws),
     score(Ns,Ws,X),
     score1(Lines,Y),
@@ -85,7 +78,6 @@ ticket(Line,N,Ns,Ws) :-
     number(X1,N,[S1|X2]),
     colon(S1),
     numbers(X2,Ns,X3),
-    % end(X3,X4),
     numbers(X3,Ws,[]).
 
 numbers([],[],[]).
