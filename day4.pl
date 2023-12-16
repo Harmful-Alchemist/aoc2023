@@ -1,19 +1,17 @@
 score2(Lines,Val) :-
-    total(Lines,TotalCopies,0),
-    write(TotalCopies),nl,
+    length(Lines,Len),
+    copies_original(Len,OrigCopies),
+    total(Lines,OrigCopies,TotalCopies,0),
     sum_list(TotalCopies,Val).
 
-total([Line|Lines],Updated,I) :-
+total([Line|Lines],A,L,I) :-
     ticket(Line,_,Ns,Ws),
     wins(Ns,Ws,Wins),
     Ii is I + 1,
-    total(Lines,Prev,Ii),
-    nl,write(Prev),nl,
-    updated(Ii,Wins,Prev,Updated,I),
-    write(Updated),nl.
+    updated(Ii,Wins,A,Anew,I),
+    total(Lines,Anew,L,Ii).
 
-total([],Copies,I) :-
-    copies_original(I,Copies).
+total([],Acc,Acc,_).
 
 updated(I,Wins,Prev,Updated,TicketI) :-
     Wins > 0,
@@ -30,7 +28,7 @@ update(I,Old,New,TicketI) :-
     I < L,
     nth0(I,Old,N),
     nth0(TicketI,Old,TicketCopies),
-    Nn is N + TicketCopies, % TODO muliply with some factor how many tickets we have can get nth of current ticket.
+    Nn is N + TicketCopies,
     replace_nth0(Old,I,N,Nn,New). % Right nth0 updates it lol so adds an element to the list :P
 
 replace_nth0(List, Index, OldElem, NewElem, NewList) :- %From https://www.swi-prolog.org/pldoc/man?predicate=nth0/4 comments
@@ -109,7 +107,7 @@ end([S|More],Out) :-
 
 
 main :- 
-    open('day4_ex.txtpl',read,Str),
+    open('day4.txtpl',read,Str),
     read_lines(Str,Y),
     score1(Y,X),
     write(X), nl,
