@@ -1,3 +1,67 @@
+score2(Lines,Val) :-
+    total(Lines,TotalCopies,0),
+    write(TotalCopies),nl,
+    sum_list(TotalCopies,Val).
+
+total([Line|Lines],Updated,I) :-
+    ticket(Line,_,Ns,Ws),
+    wins(Ns,Ws,Wins),
+    Ii is I + 1,
+    total(Lines,Prev,Ii),
+    nl,write(Prev),nl,
+    updated(Ii,Wins,Prev,Updated,I),
+    write(Updated),nl.
+
+total([],Copies,I) :-
+    copies_original(I,Copies).
+
+updated(I,Wins,Prev,Updated,TicketI) :-
+    Wins > 0,
+    Ii is I + 1,
+    Winsw is Wins - 1,
+    % write(Prev),
+    update(I,Prev,Updatedp,TicketI),
+    updated(Ii,Winsw,Updatedp,Updated,TicketI).
+
+updated(_,0,X,X,_).
+
+update(I,Old,New,TicketI) :-
+    length(Old,L),
+    I < L,
+    nth0(I,Old,N),
+    nth0(TicketI,Old,TicketCopies),
+    Nn is N + TicketCopies, % TODO muliply with some factor how many tickets we have can get nth of current ticket.
+    replace_nth0(Old,I,N,Nn,New). % Right nth0 updates it lol so adds an element to the list :P
+
+replace_nth0(List, Index, OldElem, NewElem, NewList) :- %From https://www.swi-prolog.org/pldoc/man?predicate=nth0/4 comments
+   % predicate works forward: Index,List -> OldElem, Transfer
+   nth0(Index,List,OldElem,Transfer),
+   % predicate works backwards: Index,NewElem,Transfer -> NewList
+   nth0(Index,NewList,NewElem,Transfer).
+
+update(I,Old,Old) :-
+    length(Old,L),
+    I >= L.
+
+wins(Ns,Ws,0) :-
+    intersection(Ns,Ws,[]).
+
+wins(Ns,Ws,X) :-
+    intersection(Ns,Ws,Is),
+    filled(Is),
+    length(Is,X).
+
+% copies_original(X,Scores) :-
+%     length(Scores,X),
+%     max_member(1,Scores),
+%     min_member(1,Scores).
+
+copies_original(X,[1|Scores]) :-
+    X > 0,
+    Xx is X - 1,
+    copies_original(Xx,Scores).
+
+copies_original(0,[]).
 
 score1([],0).
 score1([Line|Lines],Val) :-
@@ -45,11 +109,12 @@ end([S|More],Out) :-
 
 
 main :- 
-    open('day4.txtpl',read,Str),
+    open('day4_ex.txtpl',read,Str),
     read_lines(Str,Y),
     score1(Y,X),
-    write(X), nl.
-    % write(Z), nl.
+    write(X), nl,
+    score2(Y,Z),
+    write(Z), nl.
 
 read_lines(Stream,[]) :-
     at_end_of_stream(Stream).
