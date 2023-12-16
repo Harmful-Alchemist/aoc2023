@@ -1,7 +1,6 @@
 main :- 
     open('day3.txtpl',read,Str),
     read_lines(Str,Y),
-    % X is 4361, % Ok sure it finds the correct answer but also more.....
     partno([``|Y],X), % add the empty line to have comparison for 1st line
     % close(Str),
     gears_no([``|Y],Z),
@@ -22,85 +21,54 @@ main :-
 % Meh don't like it, are the lines constant length? Yes, but whatever
 % How about a line has a relation to symbol indices and number indices(as a list)
 
-% partno([Line], [Val])
-% partno([],0).
-
-% gear(AsteriskI,[S1,E1,N1],[S2,E2,N2],Val) :- %Adjacent on same line.
-%     AsteriskI is E1 + 1,
-%     AsteriskI is S2 - 1,
-%     Val is N1 * N2.
-
-
-% gears_no([`467..114..`,`...*......`,`..35..633.`],X).
-% Oh bah exactly two adjcent....
-gear(AsteriskI,[S1,E1,N1],[S2,E2,N2],Val) :- 
+gear(AsteriskI,[S1,E1,N1],[S2,E2,N2],AllNos,Val) :- 
     \+ same_number([S1,E1,N1],[S2,E2,N2]),
     AsteriskI >= S1 - 1,
     AsteriskI =< E1 + 1,
     AsteriskI >= S2 - 1,
     AsteriskI =< E2 + 1,
-    Val is N1 * N2.
+    Val is N1 * N2,
+    adjcent_count(AsteriskI,AllNos,2).
+
+adjcent_count(_,[],0).
+adjcent_count(I,[S1,E1,_|More],Val) :-
+    I >= S1 - 1,
+    I =< E1 + 1,
+    adjcent_count(I,More,Valp),
+    Val is 1 + Valp.
+
+adjcent_count(I,[S1,E1,_|More],Val) :-
+    \+ I >= S1 - 1,
+    I =< E1 + 1,
+    adjcent_count(I,More,Val).
+
+adjcent_count(I,[_,E1,_|More],Val) :-
+    \+ I =< E1 + 1,
+    adjcent_count(I,More,Val).
 
 same_number([S,E,N],[S,E,N]).
 
-gears(_,[_,_,_],[],0).
+gears(_,[_,_,_],[],_,0).
 
-gears(I,N1,[S2,E2,N2|More],Val) :-
-    gear(I,N1,[S2,E2,N2],Val),
-    gears(I,N1,More,_).
+gears(I,N1,[S2,E2,N2|More],AllNos,Val) :-
+    gear(I,N1,[S2,E2,N2],AllNos,Val),
+    gears(I,N1,More,AllNos,_).
 
-gears(I,N1,[S2,E2,N2|More],Val) :-
-    \+ gear(I,N1,[S2,E2,N2],_),
-    gears(I,N1,More,Val).
+gears(I,N1,[S2,E2,N2|More],AllNos,Val) :-
+    \+ gear(I,N1,[S2,E2,N2],AllNos,_),
+    gears(I,N1,More,AllNos,Val).
 
 gears_more(_,[],_,0).
 
-% gears_more(I,[S1,E1,N1|More],N2,0) :-
-%     no_n([S1,E1,N1],N2,N3),
-%     gears(I,[S1,E1,N1],N3,Valn),
-%     gears_more(I,More,N2,Valp),
-%     \+ Valp is Valn.
-
-% gears goes ok: gears(1,[2,3,12],[12,12,12,1,2,56],X). Aha gears(1,[2,3,12],[2,3,12,12,12,1,10,10,1,5,7,503,1,2,56],X). is false!
-% No match for gears_more(1,[2,3,12],[1,2,56],X).
-% Comment out the Val is 0 stuff looks ok, main still 0!
-% gears_all([11,1],[2,3,12,12,12,1,10,10,1,5,7,503,1,2,56],X). X = 0 whut
-% gears_all([11,1],[2,3,12,1,2,56],X). X = 672
-
 gears_more(I,[S1,E1,N1|More],N2,Val) :-
-    % no_n([S1,E1,N1],N2,N3),
-    % \+ Val is 0,
-    gears(I,[S1,E1,N1],N2,0),
-    gears_more(I,More,N2,Val).
-
-gears_more(I,[S1,E1,N1|More],N2,Val) :-
-    % no_n([S1,E1,N1],N2,N3),
-    % \+ Val is 0,
-    gears(I,[S1,E1,N1],N2,Val),
-    gears_more(I,More,N2,0).
-
-gears_more(I,[S1,E1,N1|More],N2,Val) :-
-    % no_n([S1,E1,N1],N2,N3),
-    gears(I,[S1,E1,N1],N2,Val), 
-    gears_more(I,More,N2,Val).
-
-% no_n(_,[],[]).
-% no_n([S1,E1,N1],[S1,E1,N1|L2],L2).
-% no_n([S1,E1,N1],[S2,E2,N2|L2],[S2,E2,N2|L3]) :-
-%     \+ S1 is S2,
-%     no_n([S1,E1,N1],L2,L3).
-
-% TODO other option is to delete number from N2 to prevent dupls and then only take 1 zero somewhere don't need the Val Val Val variant...
+    gears(I,[S1,E1,N1],N2,N2,Valn),
+    gears_more(I,More,N2,Valp),
+    Val is Valp+Valn/2. %Since we compare both ways just half em since we encounter em twice
 
 gears_all([],_,0).
 gears_all([I|Is],Ns,Val) :-
-    % nl,
-    % write(I),nl,
     gears_more(I,Ns,Ns,Valn),
-    % write(I),nl,
     gears_all(Is,Ns,Valp),
-    % write(I),nl,
-    % nl,
     Val is Valn + Valp.
 
 gears_all([I|Is],Ns,Val) :-
@@ -115,9 +83,6 @@ gears_no([L1,L2,L3],Val) :-
     info(L3,_,_,N3,G3,[]),
     combi(N1,N2,N3,Ns),
     gears_all(G2,Ns,A),
-    % write(G2),nl,
-    % write(Ns),nl,
-    % write(A),nl,
     append(N2,N3,Ns2),
     gears_all(G3,Ns2,B),
     Val is A + B.
@@ -220,7 +185,6 @@ parts_diag(Symbols,[StartN,EndN,N|More],Val,[StartN,EndN,N|RemP]) :-
     End is EndN + 1,
     \+ contains_bound(Start, End,Symbols),
     parts_diag(Symbols,More,Val,RemP).
-    % RemN is [StartN,EndN,N|RemP].
 
 contains_bound(Min,Max,[S|_]) :-
     S =< Max,
