@@ -1,4 +1,9 @@
-use std::{fs, sync::mpsc::{self, Sender}, thread, time::Duration};
+use std::{
+    fs,
+    sync::mpsc::{self, Sender},
+    thread,
+    time::Duration,
+};
 
 fn main() {
     let five_1_ex = day5_1("./../day5_ex.txt");
@@ -25,7 +30,8 @@ fn day5_1(path: &str) -> u64 {
     let _ = lines.next();
     let _ = lines.next();
 
-    lol(lines, seeds)
+    lol(lines, seeds.into_iter())
+    // lol(lines, seeds)
 }
 
 fn day5_2(path: &str) -> u64 {
@@ -33,31 +39,38 @@ fn day5_2(path: &str) -> u64 {
 
     let mut lines = contents.lines();
 
-    let mut seeds: Vec<u64> = lines
+    let seeds: Vec<u64> = lines
         .next()
         .unwrap()
         .split(" ")
         .filter_map(|w| w.parse::<u64>().ok())
         .collect::<Vec<u64>>();
 
-    let mut curr = 0;
-    let mut seeds_with_range = Vec::new();
+    // let mut curr = 0;
+    // let mut seeds_with_range = Vec::new();
 
-    while curr < seeds.len() {
-        let x = seeds[curr];
-        for i in 0..seeds[curr+1] {
-            seeds_with_range.push(x+i);
-        }
-        curr+=2
-    } //Lol already takes long, 1.7 billion!
+    // while curr < seeds.len() {
+    //     let x = seeds[curr];
+    //     for i in 0..seeds[curr+1] {
+    //         seeds_with_range.push(x+i);
+    //     }
+    //     curr+=2
+    // } //Lol already takes long, 1.7 billion!
+
+    // let _ = lines.next();
+    // let _ = lines.next();
+    // dbg!(&seeds_with_range.len());
+    // lol(lines, seeds_with_range)
+
+    let seeds_with_range_iter = seeds.chunks(2).flat_map(|s| s[0]..(s[0] + s[1]));
 
     let _ = lines.next();
     let _ = lines.next();
-    dbg!(&seeds_with_range.len());
-    lol(lines, seeds_with_range)
+    lol(lines, seeds_with_range_iter)
 }
 
-fn lol(lines: std::str::Lines<'_>, seeds: Vec<u64>) -> u64 {
+fn lol(lines: std::str::Lines<'_>, seeds: impl Iterator<Item = u64>) -> u64 {
+    // fn lol(lines: std::str::Lines<'_>, seeds: Vec<u64>) -> u64 {
     let mut maps: [Vec<Mapping>; 7] = [
         Vec::new(),
         Vec::new(),
@@ -85,38 +98,44 @@ fn lol(lines: std::str::Lines<'_>, seeds: Vec<u64>) -> u64 {
         }
     }
 
-    // let cores= 8;
+    let threads = 6;
 
-    // let mut calcs: Vec<Sender<(u64, Sender<u64>)>> = Vec::with_capacity(cores);
+    let mut calcs: Vec<Sender<(u64, Sender<u64>)>> = Vec::with_capacity(threads);
 
-    // for _ in 0..cores {
-    //     let (tx, rx) = mpsc::channel();
-    //     calcs.push(tx);
-    //     let maps = maps.clone();
-    //     thread::spawn(move || {
-    //         loop {
-    //             let rec = rx.recv_timeout(Duration::from_secs(10));
-    //             match rec {
-    //                 Ok((seed, return_tx)) => {
-    //                    let res =  maps.iter().fold(seed, |acc, e| {
-    //                         e.iter().find_map(|m| m.check(acc)).or(Some(acc)).unwrap()
-
-    //                 });
-    //                 return_tx.send(res).unwrap();
-    //             },
-    //                 _ => break
-    //             }
-    //         }
-    //     });
-
-    // }
+    for i in 0..threads {
+        let (tx, rx) = mpsc::channel();
+        calcs.push(tx);
+        let maps = maps.clone();
+        let builder = thread::Builder::new().name(i.to_string());
+        builder
+            .spawn(move || loop {
+                //Doesn't matter \/
+                let mut my_min = u64::MAX;
+                let rec = rx.recv_timeout(Duration::from_millis(100));
+                match rec {
+                    Ok((seed, return_tx)) => {
+                        let res = maps.iter().fold(seed, |acc, e| {
+                            e.iter().find_map(|m| m.check(acc)).or(Some(acc)).unwrap()
+                        });
+                        // dbg!(thread::current().name());
+                        if res < my_min {
+                            my_min = res;
+                        }
+                        return_tx.send(my_min).unwrap();
+                    }
+                    _ => break,
+                }
+            })
+            .unwrap();
+    }
 
     seeds
-        .into_iter()
-        .map(|s| {
-            maps.iter().fold(s, |acc, e| {
-                e.iter().find_map(|m| m.check(acc)).or(Some(acc)).unwrap()
-            })
+        // .into_iter()
+        .enumerate()
+        .map(|(i, s)| {
+            let (tx, rx) = mpsc::channel();
+            calcs[i % threads].send((s, tx)).unwrap();
+            rx.recv().unwrap()
         })
         .min()
         .unwrap()
