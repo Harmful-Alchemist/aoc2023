@@ -1,8 +1,6 @@
 use std::{
     fs,
-    ops::Range,
-    sync::mpsc::{self, Sender},
-    thread,
+    thread::{self, JoinHandle},
 };
 
 fn main() {
@@ -76,60 +74,25 @@ fn day5_2(path: &str) -> u64 {
         }
     }
 
-    let threads = seeds.len();
-    // let threads = 16;
-
-    let mut calcs: Vec<Sender<(Range<u64>, Option<Sender<u64>>)>> = Vec::with_capacity(threads);
-
-    for i in 0..threads {
-        let (tx, rx) = mpsc::channel();
-        calcs.push(tx);
-        let maps = maps.clone();
-        let builder = thread::Builder::new().name(i.to_string());
-
-        builder
-            .spawn(move || {
-                let mut my_min = u64::MAX;
-                loop {
-                    let rec = rx.recv();
-                    match rec {
-                        Ok((seeds, None)) => {
-                            my_min = seeds
-                                .map(|seed| {
-                                    maps.iter().fold(seed, |acc, e| {
-                                        e.iter().find_map(|m| m.check(acc)).or(Some(acc)).unwrap()
-                                    })
-                                })
-                                .min()
-                                .unwrap();
-                        }
-                        Ok((_, Some(return_tx))) => {
-                            return_tx.send(my_min).unwrap();
-                            break;
-                        }
-                        _ => panic!(),
-                    }
-                }
-            })
-            .unwrap();
-    }
-
-    seeds
+    let xs: Vec<JoinHandle<u64>> = seeds
         .chunks(2)
         .map(|s| s[0]..(s[0] + s[1]))
-        .enumerate()
-        .for_each(|(ix, range)| calcs[ix % threads].send((range, None)).unwrap());
-
-    calcs
-        .into_iter()
-        .map(|c| {
-            let (tx, rx) = mpsc::channel();
-            c.send((0..0, Some(tx))).unwrap();
-            rx.recv().unwrap()
+        .map(|range| {
+            let maps = maps.clone();
+            thread::spawn(move || {
+                range
+                    .map(|seed| {
+                        maps.iter().fold(seed, |acc, e| {
+                            e.iter().find_map(|m| m.check(acc)).or(Some(acc)).unwrap()
+                        })
+                    })
+                    .min()
+                    .unwrap()
+            })
         })
-        .min()
-        .unwrap()
+        .collect();
 
+    xs.into_iter().map(|t| t.join().unwrap()).min().unwrap()
 }
 
 fn lol(lines: std::str::Lines<'_>, seeds: impl Iterator<Item = u64>) -> u64 {
