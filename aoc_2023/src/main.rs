@@ -2,30 +2,31 @@ use crate::HandType::{
     FiveOfAKind, FourOfAKind, FullHouse, HighCard, OnePair, ThreeOfAKind, TwoPair,
 };
 use std::cmp::Ordering;
-use std::cmp::Ordering::Equal;
 use std::{
     fs,
     thread::{self, JoinHandle},
 };
 
 fn main() {
-    let s7_ex1 = day7_1("../day7_ex.txt");
-    println!("{s7_ex1}");
+    // let hand = Hand::from("J233Q 789");
+    // dbg!(hand);
+    // let s7_ex1 = day7_1("../day7_ex.txt");
+    // println!("{s7_ex1}");
     let s7_ex1 = day7_1("../day7.txt");
     println!("{s7_ex1}");
-    // dbg!(u64::MAX);
-    println!("----");
-    let five_1_ex = day5_1("./../day5_ex.txt");
-    println!("{five_1_ex}");
-    // let five_1_ex = day5_1("./../day5.txt");
+    // // dbg!(u64::MAX);
+    // println!("----");
+    // let five_1_ex = day5_1("./../day5_ex.txt");
     // println!("{five_1_ex}");
-    let five_1_ex = day5_2("./../day5_ex.txt");
-    println!("{five_1_ex}");
-    // let five_1_ex = day5_2("./../day5.txt");
+    // // let five_1_ex = day5_1("./../day5.txt");
+    // // println!("{five_1_ex}");
+    // let five_1_ex = day5_2("./../day5_ex.txt");
     // println!("{five_1_ex}");
+    // // let five_1_ex = day5_2("./../day5.txt");
+    // // println!("{five_1_ex}");
 }
 
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Debug)]
 struct Hand {
     cards: [u8; 5],
     type_: HandType,
@@ -39,11 +40,14 @@ impl From<&str> for Hand {
             .clone()
             .map(|c| {
                 if c.is_ascii_digit() {
-                    (c as u8) - 50
+                    // (c as u8) - 50
+                    (c as u8) - 49
                 } else {
                     match c {
-                        'T' => 8,
-                        'J' => 9,
+                        // 'T' => 8,
+                        // 'J' => 9,
+                        'T' => 9,
+                        'J' => 0,
                         'Q' => 10,
                         'K' => 11,
                         'A' => 12,
@@ -63,7 +67,8 @@ impl From<&str> for Hand {
 impl PartialOrd<Self> for Hand {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         if self == other {
-            Some(Equal)
+            panic!()
+            // Some(Equal)
         } else if self.type_ == other.type_ {
             Some(self.cards.cmp(&other.cards))
         } else {
@@ -81,7 +86,6 @@ impl Ord for Hand {
 fn day7_1(path: &str) -> u64 {
     let contents = fs::read_to_string(path).expect("Should have been able to read the file");
 
-    // let mut lines = contents.lines();
     let mut sorted = contents
         .lines()
         .map(|l| Hand::from(l))
@@ -112,15 +116,37 @@ impl From<&[u8; 5]> for HandType {
         value
             .iter()
             .for_each(|c| map[*c as usize] = map[*c as usize] + 1);
-        let it = map.into_iter().filter(|x| *x != 0);
-        match (it.clone().min(), it.clone().max().unwrap()) {
+        let jokers = map[0];
+        if jokers == 5 || jokers == 4 {
+            return FiveOfAKind;
+        }
+        // let it = map.into_iter().filter(|x| *x != 0);
+        let it = map[1..].into_iter().filter(|x| **x > 0);
+
+        let no_joker_best = match (it.clone().min(), it.clone().max().unwrap()) {
+            (Some(1), 1) => HighCard,
+            (_, 2) if it.clone().filter(|x| **x == 2).count() == 2 => TwoPair,
+            (_, 2) => OnePair,
             (Some(2), 3) => FullHouse,
-            (Some(1), 2) if it.collect::<Vec<u8>>().len() == 3 => TwoPair,
             (_, 5) => FiveOfAKind,
             (_, 4) => FourOfAKind,
             (_, 3) => ThreeOfAKind,
-            (_, 2) => OnePair,
-            (Some(1), 1) => HighCard,
+            _ => panic!(),
+        };
+
+        match (no_joker_best, jokers) {
+            (HighCard, 1) => OnePair,
+            (HighCard, 2) => ThreeOfAKind,
+            (HighCard, 3) => FourOfAKind,
+            (HighCard, 4) => FiveOfAKind,
+            (OnePair, 1) => ThreeOfAKind,
+            (OnePair, 2) => FourOfAKind,
+            (OnePair, 3) => FiveOfAKind,
+            (TwoPair, 1) => FullHouse,
+            (ThreeOfAKind, 1) => FourOfAKind,
+            (ThreeOfAKind, 2) => FiveOfAKind,
+            (FourOfAKind, 1) => FiveOfAKind,
+            (x, 0) => x,
             _ => panic!(),
         }
     }
